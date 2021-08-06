@@ -1,0 +1,238 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Nintendo Switch eShop Monthly Charts</title>
+    <script src="chart.min.js"></script>
+</head>
+
+<body>
+    <h1>Nintendo Switch eShop Monthly Charts</h1>
+    <div>
+        <input type="button" onclick="hideShowOneData();" id="hideOne" value="Hide Games Appeared Only Once" />
+    </div>
+    <div><canvas id="myChart"></canvas></div>
+    <script>
+        function loaded() {
+            fetch('data.txt')
+                .then(response => response.text())
+                .then(text => displayChart(text));
+        }
+        window.addEventListener('load', loaded);
+        let chart;
+        let gameAppearedOnlyOnce = [];
+        let hideOneData = true;
+        function hideShowOneData() {
+            var hideOneEle = document.getElementById("hideOne");
+            if (hideOneData) {
+                hideOne.value = "Show Games Appeared Only Once";
+                gameAppearedOnlyOnce.forEach(e => {
+                    chart.hide(e);
+                });
+                hideOneData = false;
+            }
+            else {
+                hideOne.value = "Hide Games Appeared Only Once";
+                gameAppearedOnlyOnce.forEach(e => {
+                    chart.show(e);
+                });
+                hideOneData = true;
+            }
+        }
+
+        const colorTable = {
+            "Among Us": ["#ba1414", "#780a39"],//
+            "Animal Crossing: New Horizons": ["#1a8c3b", "#62ba65"],//
+            "Cuphead": ["#1a8c3b", "#62ba65"],
+            "Game Builder Garage": ["#f78832", "#fbed14"],//
+            "Hades": ["#af5674", "#fcf9fb"],//
+            "Mario Golf: Super Rush": ["#1a8c3b", "#62ba65"],
+            "Mario Kart 8 Deluxe": ["#3172c3", "#ef125a"],//
+            "Miitopia": ["#3f55b9", "#61b4ce"],//
+            "Minecraft": ["#3c2c26", "#9fa09b"],//
+            "Monster Hunter Rise": ["#151115", "#54a3af"],//
+            "New Pokémon Snap": ["#62330d", "#de4616"],//
+            "New Super Mario Bros. U Deluxe": ["#363440", "#a4a15a"],//
+            "Pokémon Sword": ["#16106c", "#f6c601"],//
+            "Stardew Valley": ["#8b3f18", "#d39909"],//
+            "Stick Fight: The Game": ["#892336", "#c13c35"],//
+            "Story of Seasons: Pioneers of Olive Town": ["#734229", "#f7ce0f"],//
+            "Subnautica": ["#225779", "#aad7eb"],//
+            "Super Mario 3D All-Stars": ["#142267", "#cb0507"],//
+            "Super Mario 3D World + Bowser's Fury": ["#fcc303", "#f34724"],//
+            "Super Mario Party": ["#1a8c3b", "#62ba65"],
+            "Super Smash Bros. Ultimate": ["#1a8c3b", "#62ba65"],
+            "The Legend of Zelda: Breath of the Wild": ["#1a8c3b", "#62ba65"],
+            "Tony Hawk's Pro Skater 1 + 2": ["#1a8c3b", "#62ba65"],
+            "Just Dance 2021": ["#1a8c3b", "#62ba65"],
+            "51 Worldwide Games": ["#1a8c3b", "#62ba65"],
+            "Hyrule Warriors: Age of Calamity": ["#1a8c3b", "#62ba65"],
+            "Pikmin 3 Deluxe": ["#1a8c3b", "#62ba65"],
+            "Super Mario Odyssey": ["#1a8c3b", "#62ba65"],
+            "Minecraft Dungeons": ["#1a8c3b", "#62ba65"],
+            "Ori and the Will of the Wisps": ["#1a8c3b", "#62ba65"],
+            "Spiritfarer": ["#1a8c3b", "#62ba65"],
+            "Paper Mario: The Origami King": ["#1a8c3b", "#62ba65"],
+        };
+        function OnlyHasOneDataStrict(value) {
+            let hasValue = false;
+            for (let i = 0; i < value.length; i++) {
+                if (!Number.isNaN(value[i])) {
+                    if (hasValue) {
+                        return false;
+                    }
+                    hasValue = true;
+                }
+            }
+            return true;
+        }
+        function OnlyHasOneData(value) {
+            let hasValue = false;
+            let valueIndex = 0;
+            for (let i = 0; i < value.length; i++) {
+                if (!Number.isNaN(value[i])) {
+                    valueIndex = i;
+                    if (hasValue) {
+                        return false;
+                    }
+                    hasValue = true;
+                }
+            }
+            if (valueIndex == (value.length - 1) || valueIndex == 0) {
+                return false;
+            }
+            return true;
+        }
+
+        function ConvertToDatasets(dict) {
+            let datasets = [];
+            let count = 0;
+            for (const [key, value] of Object.entries(dict)) {
+                let dataset = {};
+                dataset.label = key;
+                dataset.data = value.reverse();
+                if (key in colorTable) {
+                    dataset.borderColor = colorTable[key][0];
+                    dataset.backgroundColor = colorTable[key][1];
+                    /*
+                    {
+                        label: 'Dataset 1',
+                        data: [1, 2, 3],
+                        borderColor: "#eee",
+                        backgroundColor: "#aaa",
+                    }*/
+                    if (OnlyHasOneData(value)) {
+                        console.log(":::::only on chart once: " + key);
+                    }
+                }
+                else {
+                    if (!OnlyHasOneData(value)) {
+                        console.log(key);
+                    }
+                }
+                datasets.push(dataset);
+                if (OnlyHasOneDataStrict(value)) {
+                    gameAppearedOnlyOnce.push(count);
+                }
+                count++;
+            }
+
+            console.log(gameAppearedOnlyOnce);
+            return datasets;
+        }
+
+        function AddToDict(dataDict, top15, len) {
+            for (const [key, value] of Object.entries(dataDict)) {
+                if (key in top15) {
+                    dataDict[key].push(top15[key]);
+                }
+                else {
+                    dataDict[key].push(NaN);
+                }
+            }
+            for (const [key, value] of Object.entries(top15)) {
+                if (!(key in dataDict)) {
+                    dataDict[key] = new Array(len).fill(NaN);
+                    dataDict[key].push(value);
+                }
+            }
+        }
+
+        function displayChart(dataRaw) {
+            dataRaw = dataRaw.replace(/’/g, "'");
+            var dataLines = dataRaw.split("\n");
+            var dataLinesTrimmed = dataLines.map(Function.prototype.call, String.prototype.trim)
+            console.log(dataLinesTrimmed);
+            var dataDict = {};
+            var yLabels = [];
+            var count = 0;
+            var top15 = {};
+            for (let i = 0; i < dataLinesTrimmed.length; i++) {
+                let dataLine = dataLinesTrimmed[i];
+                if (dataLine.length == 0) {
+                    continue;
+                }
+                if (dataLine[0] == "#") {
+                    if (count > 15) {
+                        console.log("error: found TOP " + count + "!!!");
+                    }
+                    if (count > 0) {
+                        AddToDict(dataDict, top15, yLabels.length - 1);
+                    }
+                    yLabels.push(dataLine.substring(1));
+                    count = 0;
+                    top15 = {};
+                }
+                else {
+                    count++;
+                    top15[dataLine] = count;
+                }
+            }
+            AddToDict(dataDict, top15, yLabels.length - 1);
+
+            console.log(dataDict);
+            console.log(Object.keys(dataDict).sort());
+            let datasets2 = ConvertToDatasets(dataDict);
+            const data = {
+                labels: yLabels.reverse(),
+                datasets: datasets2
+            };
+
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    layout: {
+                        padding: 20
+                    },
+                    scales: {
+                        yAxis: {
+                            reverse: true,
+                            min: 0,
+                            max: 16,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: false,
+                        }
+                    }
+                },
+            };
+            var ctx = document.getElementById('myChart').getContext('2d');
+            chart = new Chart(ctx, config);
+            chart.options.animation = false;
+        }
+
+    </script>
+</body>
+
+</html>
