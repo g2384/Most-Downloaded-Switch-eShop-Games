@@ -3,16 +3,27 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Nintendo Switch eShop Monthly Charts</title>
-    <script src="chart.min.js"></script>
+    <title>Nintendo Switch eShop Monthly Most-Downloaded Games</title>
+    <script src="highcharts.js"></script>
+    <style>
+        body {
+            margin: 0 auto;
+            max-width: 1600px;
+            padding: 10px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Nintendo Switch eShop Monthly Charts</h1>
+    <h1>Nintendo Switch eShop Monthly Most-Downloaded Games</h1>
     <div>
         <input type="button" onclick="hideShowOneData();" id="hideOne" value="Hide Games Appeared Only Once" />
     </div>
-    <div><canvas id="myChart"></canvas></div>
+    <div id="container" style="width:100%;height:90%"></div>
     <script>
         function loaded() {
             fetch('data.txt')
@@ -110,17 +121,18 @@
             let count = 0;
             for (const [key, value] of Object.entries(dict)) {
                 let dataset = {};
-                dataset.label = key;
+                dataset.name = key;
                 dataset.data = value.reverse();
+                dataset.marker = {
+                    symbol: "circle",
+                    radius: 3
+                }
                 if (key in colorTable) {
-                    dataset.borderColor = colorTable[key][0];
-                    dataset.backgroundColor = colorTable[key][1];
+                    dataset.color = colorTable[key][0];
                     /*
                     {
-                        label: 'Dataset 1',
+                        name: 'Dataset 1',
                         data: [1, 2, 3],
-                        borderColor: "#eee",
-                        backgroundColor: "#aaa",
                     }*/
                     if (OnlyHasOneData(value)) {
                         console.log(":::::only on chart once: " + key);
@@ -159,6 +171,10 @@
             }
         }
 
+        var categoryLinks = {
+
+        }
+
         function displayChart(dataRaw) {
             dataRaw = dataRaw.replace(/’/g, "'");
             var dataLines = dataRaw.split("\n");
@@ -194,42 +210,50 @@
             console.log(dataDict);
             console.log(Object.keys(dataDict).sort());
             let datasets2 = ConvertToDatasets(dataDict);
-            const data = {
-                labels: yLabels.reverse(),
-                datasets: datasets2
-            };
 
-            const config = {
-                type: 'line',
-                data: data,
-                options: {
-                    responsive: true,
-                    layout: {
-                        padding: 20
-                    },
-                    scales: {
-                        yAxis: {
-                            reverse: true,
-                            min: 0,
-                            max: 16,
-                            ticks: {
-                                stepSize: 1
+
+            chart = Highcharts.chart('container', {
+                chart: {
+                    type: 'line',
+                    zoomType: "x"
+                },
+                title: {
+                    text: 'Most-Downloaded Games'
+                },
+                xAxis: {
+                    categories: yLabels.reverse(),
+                    labels: {
+                        formatter: function () {
+                            if (this.value in categoryLinks) {
+                                return '<a href="' + categoryLinks[this.value] + '">' +
+                                    this.value + '</a>';
                             }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top',
+                            else {
+                                return this.value;
+                            }
                         },
-                        title: {
-                            display: false,
-                        }
+                        overflow: 'justify'
                     }
                 },
-            };
-            var ctx = document.getElementById('myChart').getContext('2d');
-            chart = new Chart(ctx, config);
-            chart.options.animation = false;
+                yAxis: {
+                    title: {
+                        text: 'Positions'
+                    },
+                    reversed: true,
+                    min: 0,
+                    max: 16,
+                    tickInterval: 1,
+                    minTickInterval: 1,
+                    minorTickInterval: 1,
+                    minorTicks: true,
+                    showFirstLabel: false,
+                    showLastLabel: false,
+                    labels: {
+                        step: 1
+                    }
+                },
+                series: datasets2
+            });
         }
 
     </script>
